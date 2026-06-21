@@ -1,0 +1,76 @@
+package com.kapil.typeahead.cache;
+
+import lombok.Data;
+import org.springframework.stereotype.Service;
+
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
+
+@Service
+public class ConsistentHashingService {
+
+    private final TreeMap<Long, RedisNode> ring = new TreeMap<>();
+    private final int virtualNodes = 150;
+
+    public void addNode(RedisNode node) {
+
+        for (int i = 0; i < virtualNodes; i++) {
+
+            String virtualNodeName = node.getName() + ":" + i;
+            long hash = hash(virtualNodeName);
+            ring.put(hash, node);
+        }
+    }
+
+    public void removeNode(RedisNode node) {
+
+        for (int i = 0; i < virtualNodes; i++) {
+
+            String virtualNodeName = node.getName() + ":" + i;
+            long hash = hash(virtualNodeName);
+            ring.remove(hash);
+        }
+    }
+
+    public RedisNode getNode(String key) {
+
+        if (ring.isEmpty()) {
+            return null;
+        }
+
+        long hash = hash(key);
+
+        Map.Entry<Long, RedisNode> entry = ring.ceilingEntry(hash);
+
+        if (entry == null) {
+            entry = ring.firstEntry();
+        }
+
+        return entry.getValue();
+    }
+
+    private long hash(String key) {
+
+        try {
+
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] digest = md.digest(key.getBytes());
+
+            long hash = ((long) (digest[3] & 0xFF) << 24)
+                    | ((long) (digest[2] & 0xFF) << 16)
+                    | ((long) (digest[1] & 0xFF) << 8)
+                    | (digest[0] & 0xFF);
+
+            return hash;
+
+        } catch (NoSuchAlgorithmException e) {
+
+            throw new RuntimeException("MD5 algorithm not found", e);
+        }
+    }
+
+    public int getRingSize() {
+        return ring.size();
+    }
+}

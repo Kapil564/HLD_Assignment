@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+
+  redis1:
+    image: redis:7
+    container_name: redis1
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis1-data:/data
+
+  redis2:
+    image: redis:7
+    container_name: redis2
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis2-data:/data
+
+  redis3:
+    image: redis:7
+    container_name: redis3
+    ports:
+      - "6381:6379"
+    volumes:
+      - redis3-data:/data
+
+volumes:
+  redis1-data:
+  redis2-data:
+  redis3-data:
