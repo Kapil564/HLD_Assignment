@@ -23,7 +23,7 @@ public class DatasetLoader {
     @PostConstruct
     public void load() {
 
-        if(redisTemplate.hasKey("dataset:loaded")) {
+        if (redisTemplate.hasKey("dataset:loaded") && searchStore.size() > 0) {
 
             System.out.println(
                     "Dataset already loaded. Skipping."
@@ -31,6 +31,8 @@ public class DatasetLoader {
 
             return;
         }
+
+        System.out.println("Loading dataset...");
 
         try (CSVReader reader = new CSVReader(new InputStreamReader(
                 Objects.requireNonNull(getClass().getClassLoader()
