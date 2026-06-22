@@ -12,8 +12,17 @@
     let selIndex = -1;
     let controller = null;
     let debounceTimer = null;
+    let isSearching = false;
 
-    function showLoading(show) { loadingEl.classList.toggle('hidden', !show); }
+    function showLoading(show, text = 'Loading...') {
+        if (show) {
+            const span = loadingEl.querySelector('span:last-child');
+            if (span) span.textContent = text;
+            loadingEl.classList.remove('hidden');
+        } else {
+            loadingEl.classList.add('hidden');
+        }
+    }
     function showError(msg) { if (msg) { errorEl.textContent = msg; errorEl.classList.remove('hidden'); } else { errorEl.classList.add('hidden'); errorEl.textContent = ''; } }
 
     function renderSuggestions() {
@@ -55,7 +64,7 @@
         if (!q || q.trim().length === 0) { clearSuggestions(); return; }
         if (controller) controller.abort();
         controller = new AbortController();
-        showLoading(true);
+        showLoading(true, 'Fetching suggestions...');
         showError(null);
 
         fetch(`/api/suggest?q=${encodeURIComponent(q)}`, { signal: controller.signal })
@@ -79,7 +88,10 @@
                 showError('Unable to load suggestions');
                 console.error(err);
             })
-            .finally(() => { showLoading(false); fetchMetrics(); });
+            .finally(() => { 
+                if (!isSearching) showLoading(false); 
+                fetchMetrics(); 
+            });
     }
 
     function debounceFetch(q) {
@@ -128,7 +140,8 @@
             resultEl.textContent = 'Please type a query.';
             return;
         }
-        showLoading(true);
+        isSearching = true;
+        showLoading(true, 'Searching...');
         showError(null);
         fetch('/api/search', {
             method: 'POST',
@@ -155,7 +168,10 @@
                 showError('Search failed');
                 console.error(err);
             })
-            .finally(() => { showLoading(false); });
+            .finally(() => { 
+                isSearching = false; 
+                showLoading(false); 
+            });
     }
 
     function loadTrending() {
