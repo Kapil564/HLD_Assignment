@@ -119,28 +119,49 @@
             });
     }
 
+    let originalInput = '';
+
     function debounceFetch(q) {
         if (debounceTimer) clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => fetchSuggest(q), 200);
     }
 
     input.addEventListener('input', (e) => {
-        const q = e.target.value;
-        debounceFetch(q);
+        originalInput = e.target.value;
+        debounceFetch(originalInput);
     });
 
     input.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowDown') {
             if (suggestions.length === 0) return;
             e.preventDefault();
-            selIndex = Math.min(suggestions.length - 1, selIndex + 1);
-            input.value = suggestions[selIndex];
+            if (selIndex === -1) {
+                originalInput = input.value;
+            }
+            selIndex++;
+            if (selIndex >= suggestions.length) {
+                selIndex = -1;
+                input.value = originalInput;
+            } else {
+                input.value = suggestions[selIndex];
+            }
             renderSuggestions();
         } else if (e.key === 'ArrowUp') {
             if (suggestions.length === 0) return;
             e.preventDefault();
-            selIndex = Math.max(0, selIndex - 1);
-            input.value = suggestions[selIndex];
+            if (selIndex === -1) {
+                originalInput = input.value;
+                selIndex = suggestions.length - 1;
+                input.value = suggestions[selIndex];
+            } else {
+                selIndex--;
+                if (selIndex < 0) {
+                    selIndex = -1;
+                    input.value = originalInput;
+                } else {
+                    input.value = suggestions[selIndex];
+                }
+            }
             renderSuggestions();
         } else if (e.key === 'Enter') {
             e.preventDefault();

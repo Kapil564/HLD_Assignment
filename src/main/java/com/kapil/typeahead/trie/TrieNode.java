@@ -1,13 +1,13 @@
 package com.kapil.typeahead.trie;
 
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 
 public class TrieNode {
 
-    private final Map<Character, TrieNode> children = new HashMap<>();
+    private final Map<Character, TrieNode> children = new ConcurrentHashMap<>();
 
-    private boolean endOfWord = false;
+    private volatile boolean endOfWord = false;
 
     public Map<Character, TrieNode> getChildren() {
         return children;

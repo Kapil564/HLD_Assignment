@@ -4,6 +4,7 @@ import com.kapil.typeahead.cache.ConsistentHashingService;
 import com.kapil.typeahead.entity.SearchQuery;
 import com.kapil.typeahead.repository.SearchQueryRepository;
 import com.kapil.typeahead.store.SearchStore;
+import com.kapil.typeahead.trie.Trie;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -15,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -23,12 +25,14 @@ import java.util.stream.IntStream;
 @Slf4j
 public class BatchWriterService {
 
+    private final Trie trie;
     private final SearchStore searchStore;
     private final ConsistentHashingService consistentHashingService;
     private final SearchQueryRepository searchQueryRepository;
     private final MetricsService metricsService;
 
-    private final Map<String, Long> batchBuffer = new ConcurrentHashMap<>();
+    private final AtomicReference<ConcurrentHashMap<String, Long>> batchBufferRef = 
+            new AtomicReference<>(new ConcurrentHashMap<>());
     private final AtomicInteger bufferSize = new AtomicInteger(0);
 
     private static final int FLUSH_THRESHOLD = 1000;
@@ -37,7 +41,7 @@ public class BatchWriterService {
     public void addToBatch(String query, long delta) {
         metricsService.recordSearchRequest(delta);
 
-        batchBuffer.merge(query, delta, Long::sum);
+        batchBufferRef.get().merge(query, delta, Long::sum);
         int size = bufferSize.incrementAndGet();
 
         if (size >= FLUSH_THRESHOLD) {
@@ -47,21 +51,19 @@ public class BatchWriterService {
 
     @Scheduled(fixedRate = 5000)
     public void scheduledFlush() {
-
-        if (!batchBuffer.isEmpty()) {
+        ConcurrentHashMap<String, Long> currentBuffer = batchBufferRef.get();
+        if (currentBuffer != null && !currentBuffer.isEmpty()) {
             flush();
         }
     }
 
     @Transactional
     public void flush() {
-        if (batchBuffer.isEmpty()) {
+        ConcurrentHashMap<String, Long> snapshot = batchBufferRef.getAndSet(new ConcurrentHashMap<>());
+        if (snapshot == null || snapshot.isEmpty()) {
             return;
         }
 
-        // Take a snapshot and clear the buffer to ensure thread-safety
-        Map<String, Long> snapshot = new HashMap<>(batchBuffer);
-        batchBuffer.clear();
         bufferSize.set(0);
 
         log.info("Flushing batch buffer with {} entries to database", snapshot.size());
@@ -73,6 +75,9 @@ public class BatchWriterService {
             Long delta = entry.getValue();
             searchStore.increment(query, delta);
             searchStore.incrementRecent(query, delta);
+            
+            // Dynamic Trie insertion
+            trie.insert(query);
         }
 
         // Batch fetch existing entries
@@ -104,12 +109,9 @@ public class BatchWriterService {
 
         // Invalidate caches
         invalidateCacheForQueries(snapshot.keySet());
-
-        log.info("Batch flush completed with {} records saved", toSave.size());
     }
 
     private void invalidateCacheForQueries(Set<String> queries) {
-
         Set<String> keysToDelete = queries.stream()
                 .flatMap(query -> generatePrefixKeys(query).stream())
                 .collect(Collectors.toSet());

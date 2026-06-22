@@ -43,6 +43,9 @@ public class DatasetLoader {
                     String normQuery = queryText.toLowerCase();
                     trie.insert(normQuery);
                     searchStore.put(normQuery, totalCount != null ? totalCount : 0L);
+                    if (totalCount != null && totalCount > 0) {
+                        searchStore.incrementRecent(normQuery, Math.max(1.0, totalCount * 0.01));
+                    }
                     count++;
                 }
             }
@@ -71,6 +74,7 @@ public class DatasetLoader {
 
                 trie.insert(query.toLowerCase());
                 searchStore.put(query.toLowerCase(), totalCount);
+                searchStore.incrementRecent(query.toLowerCase(), Math.max(1.0, totalCount * 0.01));
 
                 SearchQuery searchQuery = searchQueryRepository.findByQueryText(query.toLowerCase())
                         .orElse(new SearchQuery(
