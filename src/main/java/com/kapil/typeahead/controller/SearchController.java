@@ -46,7 +46,7 @@ public class SearchController {
 
         searchService.submitSearch(request.getQuery());
 
-        return new SearchResponse("Searched");
+        return new SearchResponse("Success", request.getQuery());
     }
 
     @GetMapping("/cache/debug")

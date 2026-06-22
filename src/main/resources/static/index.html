@@ -3,92 +3,96 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Typeahead Console</title>
-    <link rel="stylesheet" href="styles.css?v=4" />
+    <meta name="description" content="SearchConsole autocomplete console — real-time prefix suggestions powered by a distributed Redis cluster and in-memory Trie." />
+    <title>SearchConsole</title>
+    <link rel="stylesheet" href="styles.css?v=9" />
 </head>
 <body>
 <main class="container">
+
     <header class="main-header">
-        <h1>Typeahead<span class="badge">Console</span></h1>
+        <h1>Search<span class="badge">Console</span></h1>
         <div class="status-indicator">
             <span class="status-dot"></span>
-            <span>Cluster Connected (3 Nodes)</span>
+            <span>Cluster · 3 Nodes</span>
         </div>
     </header>
 
     <div class="dashboard-grid">
-        <div class="left-col">
+
+        <!-- LEFT: Search + Result -->
+        <div class="col col-left">
             <section class="search-box">
+                <h2>Search</h2>
                 <div class="input-row">
                     <div class="input-wrapper">
-                        <span class="search-icon">🔍</span>
-                        <input id="search-input" type="text" placeholder="Type a prefix (e.g., am)..." autocomplete="off" />
+                        <input
+                            id="search-input"
+                            type="text"
+                            placeholder="Type a prefix…"
+                            autocomplete="off"
+                            aria-label="Search query"
+                        />
                     </div>
                     <button id="search-btn">Search</button>
                 </div>
-                
-                <!-- Floating dropdown container for suggestions, loading, and error states -->
                 <div id="dropdown-container" class="dropdown-container hidden">
                     <ul id="suggestions" class="suggestions" role="listbox" tabindex="-1"></ul>
-                    
                     <div id="loading" class="loading hidden">
                         <span class="spinner"></span>
-                        <span>Fetching suggestions...</span>
+                        <span>Fetching…</span>
                     </div>
-                    
                     <div id="error" class="error hidden"></div>
                 </div>
             </section>
 
             <section class="results">
-                <h2>Search Result</h2>
+                <h2>Result</h2>
                 <div id="search-result" class="result-placeholder">No search performed yet.</div>
             </section>
         </div>
 
-        <div class="right-col">
+        <!-- MIDDLE: Trending -->
+        <div class="col col-mid">
             <section class="trending">
-                <h2>🔥 Trending Queries</h2>
+                <h2>Trending</h2>
                 <ul id="trending-list">
-                    <div class="loading">
-                        <span class="spinner"></span>
-                        <span>Loading trending...</span>
-                    </div>
+                    <li class="trending-empty">Loading…</li>
                 </ul>
             </section>
         </div>
+
+        <!-- RIGHT: Metrics 2×2 -->
+        <div class="col col-right">
+            <section class="metrics-panel">
+                <div class="panel-header">
+                    <h2>Diagnostics</h2>
+                    <button id="refresh-metrics-btn">↻</button>
+                </div>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <span class="metric-label">Cache Hit Rate</span>
+                        <span id="metric-hit-rate" class="metric-value">—</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Avg / p95</span>
+                        <span id="metric-latency" class="metric-value">—</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Searches</span>
+                        <span id="metric-searches" class="metric-value">—</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Write Reduction</span>
+                        <span id="metric-reduction" class="metric-value">—</span>
+                    </div>
+                </div>
+            </section>
+        </div>
+
     </div>
 
-    <section class="metrics-panel">
-        <div class="panel-header">
-            <h2>⚡ System Performance Diagnostics</h2>
-            <button id="refresh-metrics-btn">Refresh Metrics</button>
-        </div>
-        <div class="metrics-grid">
-            <div class="metric-card">
-                <span class="metric-label">Cache Hit Rate</span>
-                <span id="metric-hit-rate" class="metric-value">0.00%</span>
-                <span class="metric-desc">Prefix suggestions resolved from Redis</span>
-            </div>
-            <div class="metric-card">
-                <span class="metric-label">Avg / p95 Latency</span>
-                <span id="metric-latency" class="metric-value">0.00 ms / 0 ms</span>
-                <span class="metric-desc">Autocomplete latency benchmark</span>
-            </div>
-            <div class="metric-card">
-                <span class="metric-label">Search Volume</span>
-                <span id="metric-searches" class="metric-value">0</span>
-                <span class="metric-desc">Total query volume routed to server</span>
-            </div>
-            <div class="metric-card">
-                <span class="metric-label">Write Reduction</span>
-                <span id="metric-reduction" class="metric-value">0.00%</span>
-                <span class="metric-desc">Database writes saved via batching</span>
-            </div>
-        </div>
-    </section>
 </main>
-
-<script src="app.js?v=4"></script>
+<script src="app.js?v=9"></script>
 </body>
 </html>

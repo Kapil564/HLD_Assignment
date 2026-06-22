@@ -1,5 +1,8 @@
 package com.kapil.typeahead.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kapil.typeahead.cache.ConsistentHashingService;
 import com.kapil.typeahead.cache.RedisNode;
 import com.kapil.typeahead.dto.SuggestResponse;
@@ -21,9 +24,11 @@ public class SuggestionService {
     private final SearchStore searchStore;
     private final ConsistentHashingService consistentHashingService;
     private final MetricsService metricsService;
+    private final ObjectMapper objectMapper;
 
     private static final String CACHE_PREFIX = "suggest:";
     private static final Duration CACHE_TTL = Duration.ofMinutes(5);
+    private static final TypeReference<List<String>> STRING_LIST = new TypeReference<>() {};
 
     public SuggestResponse suggest(String prefix) {
         long startTime = System.nanoTime();
@@ -40,7 +45,7 @@ public class SuggestionService {
             isHit = true;
             RedisNode node = consistentHashingService.getNode(cacheKey);
             System.out.println("Cache HIT for: " + prefix + " on node " + (node != null ? node.getName() : "unknown"));
-            sortedQueries = cachedResult.isEmpty() ? List.of() : List.of(cachedResult.split(","));
+            sortedQueries = deserializeList(cachedResult);
         } else {
             System.out.println("Cache MISS for: " + prefix);
 
@@ -58,7 +63,7 @@ public class SuggestionService {
             if (template != null) {
                 template.opsForValue().set(
                         cacheKey,
-                        String.join(",", sortedQueries),
+                        serializeList(sortedQueries),
                         CACHE_TTL
                 );
             }
@@ -72,5 +77,24 @@ public class SuggestionService {
         metricsService.recordSuggestRequest(isHit, duration);
 
         return new SuggestResponse(prefix, suggestions);
+    }
+
+    private String serializeList(List<String> list) {
+        try {
+            return objectMapper.writeValueAsString(list);
+        } catch (JsonProcessingException e) {
+            // Fallback: should never happen for a List<String>
+            throw new RuntimeException("Failed to serialize suggestion list", e);
+        }
+    }
+
+    private List<String> deserializeList(String json) {
+        try {
+            return objectMapper.readValue(json, STRING_LIST);
+        } catch (JsonProcessingException e) {
+            // Corrupted cache entry — treat as miss
+            System.err.println("Failed to deserialize cached suggestions, treating as miss: " + e.getMessage());
+            return List.of();
+        }
     }
 }

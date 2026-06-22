@@ -15,8 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -31,9 +29,11 @@ public class BatchWriterService {
     private final SearchQueryRepository searchQueryRepository;
     private final MetricsService metricsService;
 
-    private final AtomicReference<ConcurrentHashMap<String, Long>> batchBufferRef = 
-            new AtomicReference<>(new ConcurrentHashMap<>());
-    private final AtomicInteger bufferSize = new AtomicInteger(0);
+    // Lock object to synchronize addToBatch and flush
+    private final Object bufferLock = new Object();
+
+    private ConcurrentHashMap<String, Long> batchBuffer = new ConcurrentHashMap<>();
+    private int bufferSize = 0;
 
     private static final int FLUSH_THRESHOLD = 1000;
     private static final String CACHE_PREFIX = "suggest:";
@@ -41,30 +41,41 @@ public class BatchWriterService {
     public void addToBatch(String query, long delta) {
         metricsService.recordSearchRequest(delta);
 
-        batchBufferRef.get().merge(query, delta, Long::sum);
-        int size = bufferSize.incrementAndGet();
+        boolean shouldFlush = false;
+        synchronized (bufferLock) {
+            batchBuffer.merge(query, delta, Long::sum);
+            bufferSize++;
+            if (bufferSize >= FLUSH_THRESHOLD) {
+                shouldFlush = true;
+            }
+        }
 
-        if (size >= FLUSH_THRESHOLD) {
+        if (shouldFlush) {
             flush();
         }
     }
 
     @Scheduled(fixedRate = 5000)
     public void scheduledFlush() {
-        ConcurrentHashMap<String, Long> currentBuffer = batchBufferRef.get();
-        if (currentBuffer != null && !currentBuffer.isEmpty()) {
-            flush();
+        synchronized (bufferLock) {
+            if (batchBuffer.isEmpty()) {
+                return;
+            }
         }
+        flush();
     }
 
     @Transactional
     public void flush() {
-        ConcurrentHashMap<String, Long> snapshot = batchBufferRef.getAndSet(new ConcurrentHashMap<>());
-        if (snapshot == null || snapshot.isEmpty()) {
-            return;
+        ConcurrentHashMap<String, Long> snapshot;
+        synchronized (bufferLock) {
+            if (batchBuffer.isEmpty()) {
+                return;
+            }
+            snapshot = batchBuffer;
+            batchBuffer = new ConcurrentHashMap<>();
+            bufferSize = 0;
         }
-
-        bufferSize.set(0);
 
         log.info("Flushing batch buffer with {} entries to database", snapshot.size());
         metricsService.recordDbWrites(snapshot.size());
@@ -75,7 +86,7 @@ public class BatchWriterService {
             Long delta = entry.getValue();
             searchStore.increment(query, delta);
             searchStore.incrementRecent(query, delta);
-            
+
             // Dynamic Trie insertion
             trie.insert(query);
         }
@@ -140,6 +151,8 @@ public class BatchWriterService {
     }
 
     public int getBufferSize() {
-        return bufferSize.get();
+        synchronized (bufferLock) {
+            return bufferSize;
+        }
     }
 }

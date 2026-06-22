@@ -1,15 +1,21 @@
 package com.kapil.typeahead.cache;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
+/**
+ * Immutable representation of a Redis node in the cluster.
+ * Used as a HashMap key in redisTemplatesMap — equality is based on name only.
+ */
+@Getter
+@RequiredArgsConstructor
+@EqualsAndHashCode(of = "name")
+@ToString
 public class RedisNode {
 
-    private String name;
-    private String host;
-    private int port;
+    private final String name;
+    private final String host;
+    private final int port;
 }

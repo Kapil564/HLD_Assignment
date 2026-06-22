@@ -1,6 +1,6 @@
-# Distributed Search Typeahead & Autocomplete System
+# Distributed SearchConsole & Autocomplete System
 
-A high-performance, production-ready Distributed Search Typeahead and Autocomplete system built with Spring Boot, PostgreSQL, and a distributed Redis caching layer. The system features a recency-aware ranking mechanism, write reduction buffering, and a real-time diagnostics dashboard.
+A high-performance, production-ready Distributed SearchConsole and Autocomplete system built with Spring Boot, PostgreSQL, and a distributed Redis caching layer. The system features a recency-aware ranking mechanism, write reduction buffering, and a real-time diagnostics dashboard.
 
 ---
 

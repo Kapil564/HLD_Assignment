@@ -1,12 +1,12 @@
-# Typeahead Autocomplete System - Project Report
+# SearchConsole Autocomplete System - Project Report
 
-This report provides a comprehensive overview of the design, architecture, API specifications, database design patterns, and performance characteristics of the Typeahead Console autocomplete search system.
+This report provides a comprehensive overview of the design, architecture, API specifications, database design patterns, and performance characteristics of the SearchConsole autocomplete search system.
 
 ---
 
 ## 1. System Architecture
 
-The Typeahead Autocomplete System is built using a highly optimized, tiered architecture designed to serve prefix-based autocomplete queries in sub-millisecond latencies while managing high-write search frequencies gracefully.
+The SearchConsole Autocomplete System is built using a highly optimized, tiered architecture designed to serve prefix-based autocomplete queries in sub-millisecond latencies while managing high-write search frequencies gracefully.
 
 ### Architecture Diagram
 
