@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,6 +15,8 @@ import java.util.Optional;
 public interface SearchQueryRepository extends JpaRepository<SearchQuery, Long> {
 
     Optional<SearchQuery> findByQueryText(String queryText);
+
+    List<SearchQuery> findByQueryTextIn(Collection<String> queryTexts);
 
     @Modifying
     @Query("UPDATE SearchQuery s SET s.count = s.count + :delta, s.lastUpdated = CURRENT_TIMESTAMP WHERE s.queryText = :queryText")

@@ -55,40 +55,57 @@ public class BatchWriterService {
 
     @Transactional
     public void flush() {
-
         if (batchBuffer.isEmpty()) {
             return;
         }
 
-        log.info("Flushing batch buffer with {} entries", batchBuffer.size());
-        metricsService.recordDbWrites(batchBuffer.size());
-
-        Set<String> queriesToInvalidate = batchBuffer.keySet();
-
-        for (Map.Entry<String, Long> entry : batchBuffer.entrySet()) {
-
-            String query = entry.getKey();
-            Long delta = entry.getValue();
-
-            searchStore.increment(query, delta);
-            searchStore.incrementRecent(query, delta);
-
-            SearchQuery searchQuery = searchQueryRepository.findByQueryText(query)
-                    .orElse(new SearchQuery(null, query, 0L, LocalDateTime.now(), LocalDateTime.now()));
-
-            searchQuery.setCount(searchQuery.getCount() + delta);
-            searchQuery.setLastUpdated(LocalDateTime.now());
-            searchQuery.setLastSearchedAt(LocalDateTime.now());
-
-            searchQueryRepository.save(searchQuery);
-        }
-
-        invalidateCacheForQueries(queriesToInvalidate);
-
+        // Take a snapshot and clear the buffer to ensure thread-safety
+        Map<String, Long> snapshot = new HashMap<>(batchBuffer);
         batchBuffer.clear();
         bufferSize.set(0);
 
-        log.info("Batch flush completed");
+        log.info("Flushing batch buffer with {} entries to database", snapshot.size());
+        metricsService.recordDbWrites(snapshot.size());
+
+        // Update in-memory counts
+        for (Map.Entry<String, Long> entry : snapshot.entrySet()) {
+            String query = entry.getKey();
+            Long delta = entry.getValue();
+            searchStore.increment(query, delta);
+            searchStore.incrementRecent(query, delta);
+        }
+
+        // Batch fetch existing entries
+        List<SearchQuery> existingQueries = searchQueryRepository.findByQueryTextIn(snapshot.keySet());
+        Map<String, SearchQuery> queryMap = existingQueries.stream()
+                .collect(Collectors.toMap(SearchQuery::getQueryText, q -> q));
+
+        // Prepare list for batch saving
+        List<SearchQuery> toSave = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
+
+        for (Map.Entry<String, Long> entry : snapshot.entrySet()) {
+            String query = entry.getKey();
+            Long delta = entry.getValue();
+
+            SearchQuery searchQuery = queryMap.get(query);
+            if (searchQuery != null) {
+                searchQuery.setCount(searchQuery.getCount() + delta);
+                searchQuery.setLastUpdated(now);
+                searchQuery.setLastSearchedAt(now);
+            } else {
+                searchQuery = new SearchQuery(null, query, delta, now, now);
+            }
+            toSave.add(searchQuery);
+        }
+
+        // Batch save to DB
+        searchQueryRepository.saveAll(toSave);
+
+        // Invalidate caches
+        invalidateCacheForQueries(snapshot.keySet());
+
+        log.info("Batch flush completed with {} records saved", toSave.size());
     }
 
     private void invalidateCacheForQueries(Set<String> queries) {
