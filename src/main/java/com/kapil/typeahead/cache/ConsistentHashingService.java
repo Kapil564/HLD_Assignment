@@ -1,6 +1,8 @@
 package com.kapil.typeahead.cache;
 
-import lombok.Data;
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.security.MessageDigest;
@@ -8,10 +10,21 @@ import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 @Service
+@RequiredArgsConstructor
 public class ConsistentHashingService {
 
     private final TreeMap<Long, RedisNode> ring = new TreeMap<>();
     private final int virtualNodes = 150;
+
+    private final Map<RedisNode, StringRedisTemplate> redisTemplatesMap;
+
+    @PostConstruct
+    public void init() {
+        for (RedisNode node : redisTemplatesMap.keySet()) {
+            addNode(node);
+        }
+        System.out.println("Consistent Hashing Service initialized with " + redisTemplatesMap.size() + " Redis nodes.");
+    }
 
     public void addNode(RedisNode node) {
 
@@ -48,6 +61,11 @@ public class ConsistentHashingService {
         }
 
         return entry.getValue();
+    }
+
+    public StringRedisTemplate getTemplate(String key) {
+        RedisNode node = getNode(key);
+        return node != null ? redisTemplatesMap.get(node) : null;
     }
 
     private long hash(String key) {

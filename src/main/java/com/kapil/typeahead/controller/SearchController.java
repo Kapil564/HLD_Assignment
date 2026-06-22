@@ -1,6 +1,10 @@
 package com.kapil.typeahead.controller;
 
+import com.kapil.typeahead.cache.ConsistentHashingService;
+import com.kapil.typeahead.cache.RedisNode;
 import com.kapil.typeahead.dto.SearchResponse;
+import com.kapil.typeahead.dto.SuggestResponse;
+import com.kapil.typeahead.service.MetricsService;
 import com.kapil.typeahead.service.SearchService;
 import com.kapil.typeahead.service.SuggestionService;
 import com.kapil.typeahead.service.TrendingService;
@@ -9,6 +13,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
@@ -17,11 +22,17 @@ public class SearchController {
 
     private final SuggestionService suggestionService;
     private final SearchService searchService;
-    private final StringRedisTemplate redisTemplate;
+    private final ConsistentHashingService consistentHashingService;
     private final TrendingService trendingService;
+    private final MetricsService metricsService;
+
+    @GetMapping("/metrics")
+    public Map<String, Object> getMetrics() {
+        return metricsService.getMetricsReport();
+    }
 
     @GetMapping("/suggest")
-    public List<String> suggest(@RequestParam String q) {
+    public SuggestResponse suggest(@RequestParam String q) {
 
         System.out.println("Request received: " + q);
 
@@ -42,18 +53,21 @@ public class SearchController {
     public CacheDebugResponse cacheDebug(@RequestParam String prefix) {
 
         String cacheKey = "suggest:" + prefix.toLowerCase();
-        String cachedResult = redisTemplate.opsForValue().get(cacheKey);
+        
+        RedisNode node = consistentHashingService.getNode(cacheKey);
+        StringRedisTemplate template = consistentHashingService.getTemplate(cacheKey);
+        String cachedResult = template != null ? template.opsForValue().get(cacheKey) : null;
 
         String status = cachedResult != null ? "HIT" : "MISS";
-        String cacheNode = "Node-1";
+        String cacheNode = node != null ? node.getName() : "None";
 
         return new CacheDebugResponse(prefix, cacheNode, status);
     }
 
     @GetMapping("/trending")
-    public List<TrendingService.TrendingItem> trending() {
+    public Map<String, List<TrendingService.TrendingItem>> trending() {
 
-        return trendingService.getTrending(10);
+        return Map.of("trending", trendingService.getTrending(10));
     }
 
     public static class SearchRequest {

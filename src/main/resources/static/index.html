@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Typeahead</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<main class="container">
+    <h1>Typeahead</h1>
+
+    <section class="search-box">
+        <div class="input-row">
+            <input id="search-input" type="text" placeholder="Search..." autocomplete="off" />
+            <button id="search-btn">Search</button>
+        </div>
+
+        <ul id="suggestions" class="suggestions hidden" role="listbox" tabindex="-1"></ul>
+
+        <div id="loading" class="loading hidden">Loading...</div>
+        <div id="error" class="error hidden"></div>
+    </section>
+
+    <section class="results">
+        <h2>Search Result</h2>
+        <div id="search-result">No search performed yet.</div>
+    </section>
+
+    <section class="trending">
+        <h2>Trending</h2>
+        <ul id="trending-list">Loading trending...</ul>
+    </section>
+
+    <section class="metrics-panel">
+        <h2>System Performance Metrics</h2>
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <span class="metric-label">Cache Hit Rate</span>
+                <span id="metric-hit-rate" class="metric-value">0.00%</span>
+            </div>
+            <div class="metric-card">
+                <span class="metric-label">Avg / p95 Latency</span>
+                <span id="metric-latency" class="metric-value">0.00ms / 0ms</span>
+            </div>
+            <div class="metric-card">
+                <span class="metric-label">Search Requests</span>
+                <span id="metric-searches" class="metric-value">0</span>
+            </div>
+            <div class="metric-card">
+                <span class="metric-label">Write Reduction</span>
+                <span id="metric-reduction" class="metric-value">0.00%</span>
+            </div>
+        </div>
+        <button id="refresh-metrics-btn">Refresh Metrics</button>
+    </section>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

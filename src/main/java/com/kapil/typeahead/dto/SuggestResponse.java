@@ -3,7 +3,11 @@ package com.kapil.typeahead.dto;
 import java.util.List;
 
 public record SuggestResponse(
-        String prefix,
-        List<String> suggestions
+        String query,
+        List<SuggestionItem> suggestions
 ) {
+    public record SuggestionItem(
+            String text,
+            long count
+    ) {}
 }
