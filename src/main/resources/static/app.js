@@ -165,9 +165,17 @@
                 }
                 list.forEach(item => {
                     const li = document.createElement('li');
-                    const text = item.query ? item.query : JSON.stringify(item);
-                    const scoreText = item.score !== undefined ? ` — Score: ${item.score.toFixed(1)}` : (item.count ? ` — ${item.count}` : '');
-                    li.textContent = text + scoreText;
+                    
+                    const querySpan = document.createElement('span');
+                    querySpan.className = 'trending-query';
+                    querySpan.textContent = item.query ? item.query : JSON.stringify(item);
+                    
+                    const scoreSpan = document.createElement('span');
+                    scoreSpan.className = 'trending-score';
+                    scoreSpan.textContent = item.score !== undefined ? `Score: ${item.score.toFixed(1)}` : (item.count ? `${item.count}` : '0');
+                    
+                    li.appendChild(querySpan);
+                    li.appendChild(scoreSpan);
                     trendingList.appendChild(li);
                 });
             })

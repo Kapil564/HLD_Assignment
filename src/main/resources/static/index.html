@@ -3,56 +3,85 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Typeahead</title>
+    <title>Typeahead Console</title>
     <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 <main class="container">
-    <h1>Typeahead</h1>
+    <header class="main-header">
+        <h1>Typeahead<span class="badge">Console</span></h1>
+        <div class="status-indicator">
+            <span class="status-dot"></span>
+            <span>Cluster Connected (3 Nodes)</span>
+        </div>
+    </header>
 
-    <section class="search-box">
-        <div class="input-row">
-            <input id="search-input" type="text" placeholder="Search..." autocomplete="off" />
-            <button id="search-btn">Search</button>
+    <div class="dashboard-grid">
+        <div class="left-col">
+            <section class="search-box">
+                <div class="input-row">
+                    <div class="input-wrapper">
+                        <span class="search-icon">🔍</span>
+                        <input id="search-input" type="text" placeholder="Type a prefix (e.g., am)..." autocomplete="off" />
+                    </div>
+                    <button id="search-btn">Search</button>
+                </div>
+                
+                <ul id="suggestions" class="suggestions hidden" role="listbox" tabindex="-1"></ul>
+                
+                <div id="loading" class="loading hidden">
+                    <span class="spinner"></span>
+                    <span>Fetching suggestions...</span>
+                </div>
+                <div id="error" class="error hidden"></div>
+            </section>
+
+            <section class="results">
+                <h2>Search Result</h2>
+                <div id="search-result" class="result-placeholder">No search performed yet.</div>
+            </section>
         </div>
 
-        <ul id="suggestions" class="suggestions hidden" role="listbox" tabindex="-1"></ul>
-
-        <div id="loading" class="loading hidden">Loading...</div>
-        <div id="error" class="error hidden"></div>
-    </section>
-
-    <section class="results">
-        <h2>Search Result</h2>
-        <div id="search-result">No search performed yet.</div>
-    </section>
-
-    <section class="trending">
-        <h2>Trending</h2>
-        <ul id="trending-list">Loading trending...</ul>
-    </section>
+        <div class="right-col">
+            <section class="trending">
+                <h2>🔥 Trending Queries</h2>
+                <ul id="trending-list">
+                    <div class="loading">
+                        <span class="spinner"></span>
+                        <span>Loading trending...</span>
+                    </div>
+                </ul>
+            </section>
+        </div>
+    </div>
 
     <section class="metrics-panel">
-        <h2>System Performance Metrics</h2>
+        <div class="panel-header">
+            <h2>⚡ System Performance Diagnostics</h2>
+            <button id="refresh-metrics-btn">Refresh Metrics</button>
+        </div>
         <div class="metrics-grid">
             <div class="metric-card">
                 <span class="metric-label">Cache Hit Rate</span>
                 <span id="metric-hit-rate" class="metric-value">0.00%</span>
+                <span class="metric-desc">Prefix suggestions resolved from Redis</span>
             </div>
             <div class="metric-card">
                 <span class="metric-label">Avg / p95 Latency</span>
-                <span id="metric-latency" class="metric-value">0.00ms / 0ms</span>
+                <span id="metric-latency" class="metric-value">0.00 ms / 0 ms</span>
+                <span class="metric-desc">Autocomplete latency benchmark</span>
             </div>
             <div class="metric-card">
-                <span class="metric-label">Search Requests</span>
+                <span class="metric-label">Search Volume</span>
                 <span id="metric-searches" class="metric-value">0</span>
+                <span class="metric-desc">Total query volume routed to server</span>
             </div>
             <div class="metric-card">
                 <span class="metric-label">Write Reduction</span>
                 <span id="metric-reduction" class="metric-value">0.00%</span>
+                <span class="metric-desc">Database writes saved via batching</span>
             </div>
         </div>
-        <button id="refresh-metrics-btn">Refresh Metrics</button>
     </section>
 </main>
 
