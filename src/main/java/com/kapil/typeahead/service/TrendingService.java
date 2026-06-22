@@ -17,7 +17,9 @@ public class TrendingService {
 
         return searchStore.getCounts().keySet().stream()
                 .map(query -> new TrendingItem(query, searchStore.getTrendingScore(query), searchStore.getCount(query)))
-                .sorted(Comparator.comparingDouble(TrendingItem::getScore).reversed())
+                .sorted(Comparator.comparingDouble(TrendingItem::getScore).reversed()
+                        .thenComparing(Comparator.comparingLong(TrendingItem::getCount).reversed())
+                        .thenComparing(TrendingItem::getQuery))
                 .limit(limit)
                 .collect(Collectors.toList());
     }

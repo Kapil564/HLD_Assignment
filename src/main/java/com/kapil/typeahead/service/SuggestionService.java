@@ -49,7 +49,9 @@ public class SuggestionService {
             System.out.println("Matches found = " + matches.size());
 
             sortedQueries = matches.stream()
-                    .sorted(Comparator.comparingDouble(searchStore::getTrendingScore).reversed())
+                    .sorted(Comparator.comparingDouble(searchStore::getTrendingScore).reversed()
+                            .thenComparing(Comparator.comparingLong(searchStore::getCount).reversed())
+                            .thenComparing(Comparator.naturalOrder()))
                     .limit(10)
                     .toList();
 

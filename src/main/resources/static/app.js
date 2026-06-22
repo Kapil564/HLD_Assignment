@@ -162,7 +162,11 @@
                 }
                 resultEl.classList.remove('result-placeholder');
                 fetchMetrics();
-                setTimeout(fetchMetrics, 5500); // refresh after buffer flush
+                loadTrending();
+                setTimeout(() => {
+                    fetchMetrics();
+                    loadTrending();
+                }, 5500); // refresh after buffer flush
             })
             .catch(err => {
                 showError('Search failed');
