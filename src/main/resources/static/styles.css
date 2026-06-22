@@ -220,22 +220,31 @@ section h2 {
     transform: translateY(1px);
 }
 
-/* Autocomplete suggestions */
-.suggestions {
+/* Autocomplete suggestions dropdown container */
+.dropdown-container {
     position: absolute;
-    top: calc(100% - 10px);
-    left: 24px;
-    right: 24px;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
     margin: 0;
     padding: 8px;
-    list-style: none;
     background: #131a2a;
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 12px;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-    max-height: 250px;
-    overflow-y: auto;
     z-index: 999;
+}
+
+.dropdown-container.hidden {
+    display: none;
+}
+
+.suggestions {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    max-height: 240px;
+    overflow-y: auto;
 }
 
 .suggestions.hidden {
@@ -319,7 +328,7 @@ section h2 {
 
 /* Trending panel */
 .trending {
-    min-height: 310px;
+    min-height: auto;
 }
 
 .trending ul {
@@ -327,26 +336,29 @@ section h2 {
     padding: 0;
     margin: 0;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
     gap: 10px;
 }
 
 .trending li {
-    display: flex;
-    justify-content: space-between;
+    display: inline-flex;
     align-items: center;
-    padding: 12px 14px;
+    gap: 8px;
+    padding: 8px 14px;
     background: rgba(13, 17, 29, 0.4);
     border: 1px solid var(--card-border);
-    border-radius: 10px;
-    font-size: 14px;
+    border-radius: 9999px;
+    font-size: 13px;
     transition: var(--transition);
+    cursor: pointer;
 }
 
 .trending li:hover {
-    transform: translateX(2px);
-    border-color: rgba(255, 255, 255, 0.12);
-    background: rgba(13, 17, 29, 0.6);
+    transform: translateY(-1px);
+    border-color: rgba(255, 255, 255, 0.15);
+    background: rgba(13, 17, 29, 0.7);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
 }
 
 .trending-query {

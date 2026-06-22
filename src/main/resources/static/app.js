@@ -7,12 +7,25 @@
     const searchBtn = document.getElementById('search-btn');
     const resultEl = document.getElementById('search-result');
     const trendingList = document.getElementById('trending-list');
+    const dropdownContainerEl = document.getElementById('dropdown-container');
 
     let suggestions = [];
     let selIndex = -1;
     let controller = null;
     let debounceTimer = null;
     let isSearching = false;
+
+    function checkDropdownVisibility() {
+        const hasSuggestions = suggestions && suggestions.length > 0;
+        const isLoading = !loadingEl.classList.contains('hidden');
+        const hasError = !errorEl.classList.contains('hidden');
+        
+        if (hasSuggestions || isLoading || hasError) {
+            dropdownContainerEl.classList.remove('hidden');
+        } else {
+            dropdownContainerEl.classList.add('hidden');
+        }
+    }
 
     function showLoading(show, text = 'Loading...') {
         if (show) {
@@ -22,13 +35,25 @@
         } else {
             loadingEl.classList.add('hidden');
         }
+        checkDropdownVisibility();
     }
-    function showError(msg) { if (msg) { errorEl.textContent = msg; errorEl.classList.remove('hidden'); } else { errorEl.classList.add('hidden'); errorEl.textContent = ''; } }
+
+    function showError(msg) {
+        if (msg) {
+            errorEl.textContent = msg;
+            errorEl.classList.remove('hidden');
+        } else {
+            errorEl.classList.add('hidden');
+            errorEl.textContent = '';
+        }
+        checkDropdownVisibility();
+    }
 
     function renderSuggestions() {
         suggestionsEl.innerHTML = '';
         if (!suggestions || suggestions.length === 0) {
             suggestionsEl.classList.add('hidden');
+            checkDropdownVisibility();
             return;
         }
         suggestionsEl.classList.remove('hidden');
@@ -39,13 +64,13 @@
             li.dataset.index = i;
             li.setAttribute('aria-selected', i === selIndex ? 'true' : 'false');
             li.addEventListener('mousedown', (e) => {
-                // mousedown to avoid losing focus before click
                 e.preventDefault();
                 selectSuggestion(i);
                 submitSearch(s);
             });
             suggestionsEl.appendChild(li);
         });
+        checkDropdownVisibility();
     }
 
     function selectSuggestion(i) {
@@ -191,10 +216,11 @@
                 }
                 list.forEach(item => {
                     const li = document.createElement('li');
+                    const queryText = item.query ? item.query : JSON.stringify(item);
                     
                     const querySpan = document.createElement('span');
                     querySpan.className = 'trending-query';
-                    querySpan.textContent = item.query ? item.query : JSON.stringify(item);
+                    querySpan.textContent = queryText;
                     
                     const scoreSpan = document.createElement('span');
                     scoreSpan.className = 'trending-score';
@@ -202,6 +228,13 @@
                     
                     li.appendChild(querySpan);
                     li.appendChild(scoreSpan);
+                    
+                    li.addEventListener('click', () => {
+                        input.value = queryText;
+                        submitSearch(queryText);
+                        clearSuggestions();
+                    });
+                    
                     trendingList.appendChild(li);
                 });
             })
@@ -224,6 +257,13 @@
     }
 
     document.getElementById('refresh-metrics-btn').addEventListener('click', fetchMetrics);
+
+    // Close suggestions when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!input.contains(e.target) && !dropdownContainerEl.contains(e.target)) {
+            clearSuggestions();
+        }
+    });
 
     // Initialize
     loadTrending();

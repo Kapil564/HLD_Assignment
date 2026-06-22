@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Typeahead Console</title>
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=3" />
 </head>
 <body>
 <main class="container">
@@ -27,18 +27,17 @@
                     <button id="search-btn">Search</button>
                 </div>
                 
-                <ul id="suggestions" class="suggestions hidden" role="listbox" tabindex="-1"></ul>
-                
-                <div id="loading" class="loading hidden">
-                    <span class="spinner"></span>
-                    <span>Fetching suggestions...</span>
+                <!-- Floating dropdown container for suggestions, loading, and error states -->
+                <div id="dropdown-container" class="dropdown-container hidden">
+                    <ul id="suggestions" class="suggestions" role="listbox" tabindex="-1"></ul>
+                    
+                    <div id="loading" class="loading hidden">
+                        <span class="spinner"></span>
+                        <span>Fetching suggestions...</span>
+                    </div>
+                    
+                    <div id="error" class="error hidden"></div>
                 </div>
-                <div id="error" class="error hidden"></div>
-            </section>
-
-            <section class="results">
-                <h2>Search Result</h2>
-                <div id="search-result" class="result-placeholder">No search performed yet.</div>
             </section>
         </div>
 
@@ -83,8 +82,13 @@
             </div>
         </div>
     </section>
+
+    <section class="results">
+        <h2>Search Result</h2>
+        <div id="search-result" class="result-placeholder">No search performed yet.</div>
+    </section>
 </main>
 
-<script src="app.js"></script>
+<script src="app.js?v=3"></script>
 </body>
 </html>
