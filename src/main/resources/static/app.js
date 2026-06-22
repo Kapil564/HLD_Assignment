@@ -140,8 +140,14 @@
                 return res.json();
             })
             .then(data => {
-                // SearchResponse in controller returns { message: "Searched" }
-                resultEl.textContent = data && data.message ? data.message : 'Search submitted';
+                if (data && data.result) {
+                    resultEl.textContent = data.result;
+                } else if (data && data.message) {
+                    resultEl.textContent = data.message;
+                } else {
+                    resultEl.textContent = 'Searched';
+                }
+                resultEl.classList.remove('result-placeholder');
                 fetchMetrics();
                 setTimeout(fetchMetrics, 5500); // refresh after buffer flush
             })

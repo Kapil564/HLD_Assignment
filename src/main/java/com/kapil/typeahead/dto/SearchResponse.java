@@ -10,4 +10,9 @@ import lombok.NoArgsConstructor;
 public class SearchResponse {
 
     private String message;
+    private String result;
+
+    public SearchResponse(String message) {
+        this.message = message;
+    }
 }
